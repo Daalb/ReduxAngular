@@ -1,6 +1,6 @@
 import { createReducer, on } from '@ngrx/store';
 import { Todo } from './models/todo.model';
-import { borrar, crear, editar, toggle, toggleAll } from './todo.actions';
+import { borrar, crear, editar, toggle, toggleAll, limpiarTodos } from './todo.actions';
 
 
 export const estadoInicial: Todo[] = [
@@ -15,6 +15,7 @@ export const estadoInicial: Todo[] = [
 
 export const todoReducer = createReducer(
     estadoInicial,
+    on(limpiarTodos, state => state.filter(todo => !todo.completado)),
     on(crear, (state, { texto }) => [...state,new Todo(texto) ]), //*Esto que se hace porque no se puede mutar directamente el estado. Por lo tanto se crea un nuevo array con base al anterior y agregando el nuevo elemento.
     on(borrar, (state,{id}) => state.filter(todo => todo.id !== id)),
     on(toggle, (state, { id }) => {
