@@ -6,22 +6,42 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 import { map } from 'rxjs/operators';
 import { Usuario } from '../models/usuario.model';
+import { AppState } from '../app.reducer';
+import { Store } from '@ngrx/store';
+
+import * as authActions  from '../auth/auth.actions';
+import { Subscription } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
-  constructor( public auth: AngularFireAuth,
-              private firestore: AngularFirestore) { }
+  public userSubscription!: Subscription;
+
+  constructor( 
+    public auth: AngularFireAuth,
+    private firestore: AngularFirestore,
+    private store: Store<AppState>
+  ) { }
 
     //Permite avisar si sucede algun cambio con la autenticación o si quiiere entrar a una ruta y puede o no entrar
     initAuthListener() {
     //@ts-ignore
     this.auth.authState.subscribe( fuser => {
-      console.log("fuser", fuser );
-      console.log("fuser uid", fuser?.uid );
-      console.log("fuser emal", fuser?.email );
+      // console.log("fuser", fuser );
+      // console.log("fuser uid", fuser?.uid );
+      // console.log("fuser emal", fuser?.email );
+      this.userSubscription = this.firestore.doc(`${fuser?.uid}/usuario`).valueChanges()
+        .subscribe((firestoreUser: any) => {
+          if(fuser){
+            const user = Usuario.fromFirebase(firestoreUser);
+            this.store.dispatch(authActions.setUser({user}));
+          }else{
+            this.userSubscription.unsubscribe();
+            this.store.dispatch(authActions.unSetUser());
+          }
+        })
     })
 
   }
